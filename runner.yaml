@@ -1,0 +1,71 @@
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: drone
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - get
+  - create
+  - delete
+  - list
+  - watch
+  - update
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: drone
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: Role
+  name: drone
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drone-runner
+  labels:
+    app.kubernetes.io/name: drone-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: drone-runner
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: drone-runner
+    spec:
+      containers:
+      - name: runner
+        image: drone/drone-runner-kube:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DRONE_RPC_HOST
+          value: drone-server:4000
+        - name: DRONE_RPC_PROTO
+          value: http
+        - name: DRONE_NAMESPACE_DEFAULT
+          value: drone
+        - name: DRONE_RPC_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: drone-server-rpc
+              key: drone-rpc-secret
