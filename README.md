@@ -30,7 +30,7 @@ Install Ngrok and create your account.
 https://ngrok.com/
 
 ```
-$ brew install cask ngrok
+$ brew cask install ngrok
 ```
 
 ## Create a kubernetes cluster with kind
